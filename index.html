@@ -572,6 +572,10 @@ input.mono { font-family: var(--mono); font-size: 12px; }
             <label>Customer VAT / Tax ID</label>
             <input type="text" id="inv-cust-vat" class="mono" placeholder="e.g. DE123456789">
           </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Address</label>
+            <input type="text" id="inv-address" placeholder="Street, City, Postal Code">
+          </div>
         </div>
  
         <hr class="divider">
@@ -901,6 +905,9 @@ async function selectPayment(p) {
   document.getElementById('inv-customer').value = getCustomerName(p);
   document.getElementById('inv-email').value = getCustomerEmail(p);
   document.getElementById('inv-country').value = p.billing_details?.address?.country || p.payment_method_details?.card?.country || '';
+  const addr = p.billing_details?.address;
+  const addrParts = [addr?.line1, addr?.line2, addr?.city, addr?.postal_code, addr?.country].filter(Boolean);
+  document.getElementById('inv-address').value = addrParts.join(', ');
   document.getElementById('inv-amount').value = (p.amount / 100).toFixed(2);
   document.getElementById('inv-receipt').value = p.receipt_number || '';
   document.getElementById('inv-stripe-id').value = p.id;
@@ -951,6 +958,7 @@ function generateAndGoStep3() {
   const customer = document.getElementById('inv-customer').value.trim();
   const email = document.getElementById('inv-email').value.trim();
   const country = document.getElementById('inv-country').value.trim();
+  const address = document.getElementById('inv-address').value.trim();
   const custVat = document.getElementById('inv-cust-vat').value.trim();
   const amount = document.getElementById('inv-amount').value.trim();
   const currency = document.getElementById('inv-currency').value.trim() || 'EUR';
@@ -972,7 +980,7 @@ function generateAndGoStep3() {
   const full =
 `Sąskaita Nr.: ${invNo}
 Data: ${date}
-Pirkėjas: ${customer}${email ? '\nEl. paštas: ' + email : ''}${country ? '\nŠalis: ' + country : ''}${custVat ? '\nPVM kodas: ' + custVat : ''}
+Pirkėjas: ${customer}${email ? '\nEl. paštas: ' + email : ''}${address ? '\nAdresas: ' + address : ''}${country ? '\nŠalis: ' + country : ''}${custVat ? '\nPVM kodas: ' + custVat : ''}
  
 Paslauga: ${service}
 Suma: ${amount} ${currency}
@@ -986,7 +994,7 @@ Stripe ID: ${stripeId}`;
   const islaidos =
 `Įplaukos — ${date}
 Sąskaita Nr.: ${invNo}
-Klientas: ${customer}${country ? ' (' + country + ')' : ''}
+Klientas: ${customer}${address ? ', ' + address : ''}${country ? ' (' + country + ')' : ''}
 Paslauga: ${service}
 Suma: ${amount} ${currency}
 ${vatLine}
